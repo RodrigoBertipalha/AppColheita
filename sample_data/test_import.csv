@@ -1,0 +1,10 @@
+Loc Seq,entry book name,range,row,recid,tier,plot,GrupoId
+Test Field
+A1,Test Book,1,2,REC001,3,123,G1
+A2,Test Book,2,3,REC002,4,124,G1
+A3,Test Book,3,4,REC003,5,125,G2
+A4,Test Book,4,5,REC004,6,126,G2
+A5,Test Book,5,6,REC005,7,127,G3
+A6,Test Book,6,7,REC006,8,128,G3
+A7,Test Book,7,8,REC007,9,129,G4
+A8,Test Book,8,9,REC008,10,130,G4

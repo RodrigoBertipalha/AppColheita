@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Colheita de Campo</string>
+    
+    <!-- Common -->
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="ok">OK</string>
+    <string name="back">Voltar</string>
+    <string name="save">Salvar</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">Colheita de Campo</string>
+    <string name="import_file">Buscar Arquivo</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="harvest">Colheita</string>
+    <string name="last_field_summary">Último Campo: %1$s | Total Plots: %2$d | Colhido: %3$.1f%%</string>
+    <string name="no_field_imported">Nenhum campo importado</string>
+    
+    <!-- Import/Export Screen -->
+    <string name="import_export_title">Buscar Campo</string>
+    <string name="select_file">Selecionar Arquivo</string>
+    <string name="import_strategy">Estratégia de Importação</string>
+    <string name="replace">Substituir</string>
+    <string name="merge">Mesclar</string>
+    <string name="import_btn">Importar</string>
+    <string name="import_history">Histórico de Importações</string>
+    <string name="export_title">Exportar Arquivo</string>
+    <string name="export_btn">Exportar</string>
+    <string name="send_email">Enviar por E-mail</string>
+    <string name="import_success">Arquivo importado com sucesso</string>
+    <string name="export_success">Arquivo exportado com sucesso</string>
+    <string name="file_preview">Preview do Arquivo</string>
+    
+    <!-- Dashboard Screen -->
+    <string name="dashboard_title">Dashboard de Colheita</string>
+    <string name="total_plots">Total de Plots: %1$d</string>
+    <string name="harvested_percentage">Colhido: %1$.1f%%</string>
+    <string name="filter_by_group">Filtrar por Grupo</string>
+    <string name="search_by_recid">Buscar por recid</string>
+    <string name="harvested">Colhido</string>
+    <string name="not_harvested">Não Colhido</string>
+    <string name="group_distribution">Distribuição por Grupo</string>
+    
+    <!-- Harvest Screen -->
+    <string name="harvest_title">Colheita</string>
+    <string name="harvested_count">Colhido: %1$d / %2$d</string>
+    <string name="remaining">Faltam: %1$d</string>
+    <string name="recid_input">Digite ou escaneie o RECID</string>
+    <string name="harvest_by_plot">Colher por Plot</string>
+    <string name="harvest_by_group">Colher por Grupo</string>
+    <string name="undo_harvest">Desfazer Colheita</string>
+    <string name="plot_already_harvested">Plot já colhido</string>
+    <string name="plot_marked_as_harvested">Plot marcado como colhido</string>
+    <string name="plot_marked_as_not_harvested">Plot marcado como não colhido</string>
+    <string name="invalid_recid">RECID inválido</string>
+    <string name="select_plots_to_harvest">Selecione plots para colher</string>
+    <string name="awaiting_scanner">Aguardando scanner…</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_file">Arquivo inválido ou formato não suportado</string>
+    <string name="error_reading_file">Erro ao ler o arquivo</string>
+    <string name="error_writing_file">Erro ao escrever o arquivo</string>
+    <string name="error_no_field_imported">Nenhum campo importado. Por favor, importe um arquivo primeiro.</string>
+</resources>
