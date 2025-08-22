@@ -323,6 +323,58 @@ fun HarvestScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = stringResource(R.string.undo_harvest))
                         }
+                        
+                        // Exibir último plot colhido
+                        state.lastColhidoPlot?.let { lastPlot ->
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                ) {
+                                    Text(
+                                        text = "Último Plot Colhido:",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    Row {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "Plot: ${lastPlot.plot}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = "RECID: ${lastPlot.recid}",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                        
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(
+                                                text = "Grupo: ${lastPlot.grupoId}",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = "Range: ${lastPlot.range}, Row: ${lastPlot.row}",
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -467,10 +519,27 @@ fun PlotSelectionItem(
         
         Spacer(modifier = Modifier.width(8.dp))
         
+        // Layout melhorado conforme solicitado
         Column(modifier = Modifier.weight(1f)) {
             Text(
+                text = "Plot: ${plot.plot}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
                 text = "RECID: ${plot.recid}",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        
+        // Grupo e localização à direita
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = "Grupo: ${plot.grupoId}",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium
             )
             Text(
                 text = "Range: ${plot.range}, Row: ${plot.row}",

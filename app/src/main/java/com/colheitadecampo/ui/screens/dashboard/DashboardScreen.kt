@@ -305,30 +305,33 @@ fun PlotItem(plot: Plot) {
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            // Plot details
+            // Plot details - Layout melhorado conforme solicitado
             Column(modifier = Modifier.weight(1f)) {
+                // Plot em destaque
                 Text(
-                    text = "RECID: ${plot.recid}",
+                    text = "Plot: ${plot.plot}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
+                // RECID logo abaixo
                 Text(
-                    text = "Grupo: ${plot.grupoId}",
+                    text = "RECID: ${plot.recid}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }
             
-            // Location
+            // Grupo e localização à direita
             Column(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.padding(start = 8.dp)
             ) {
                 Text(
-                    text = "Range: ${plot.range}",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "Grupo: ${plot.grupoId}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Row: ${plot.row}",
+                    text = "Range: ${plot.range}, Row: ${plot.row}",
                     style = MaterialTheme.typography.bodySmall
                 )
             }

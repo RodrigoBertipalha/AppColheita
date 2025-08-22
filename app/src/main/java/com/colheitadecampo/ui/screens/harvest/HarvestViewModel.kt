@@ -103,18 +103,26 @@ class HarvestViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
                 
-                marcarColhidoPorRecidUseCase.marcarColhido(
+                val plot = marcarColhidoPorRecidUseCase.marcarColhido(
                     recid = currentState.recidInput,
                     colhido = true
                 )
+                
+                // Recupera o último plot colhido para mostrar na UI
+                val updatedLastColhidoPlot = plot ?: plotRepository.getPlotByRecid(currentState.recidInput)
                 
                 _state.update { 
                     it.copy(
                         recidInput = "",
                         isLoading = false,
+                        lastColhidoPlot = updatedLastColhidoPlot,
                         successMessage = "Plot ${currentState.recidInput} marcado como colhido!"
                     )
                 }
+                
+                // Força a atualização de contagens de colheita
+                plotRepository.getTotalPlotsCount(fieldId)
+                plotRepository.getHarvestedPlotsCount(fieldId)
                 
                 // Clear success message after 3 seconds
                 kotlinx.coroutines.delay(3000)
@@ -291,6 +299,7 @@ data class HarvestState(
     val selectedPlots: Set<String> = emptySet(),
     val showGroupDialog: Boolean = false,
     val isLoading: Boolean = false,
+    val lastColhidoPlot: Plot? = null,
     val successMessage: String? = null,
     val successMessageGrupo: String? = null,
     val errorMessage: String? = null
