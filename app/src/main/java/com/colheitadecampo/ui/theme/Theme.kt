@@ -27,44 +27,64 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
+    // Cores principais com contraste aumentado
     primary = BluePrimary,
     onPrimary = White,
     primaryContainer = Color(0xFFCFE3EF), // Versão clara do BluePrimary
     onPrimaryContainer = BluePrimary,
-    secondary = BlueMedium,
+    
+    // Secundária mais vibrante para melhor visibilidade
+    secondary = HighContrastBlue, // Azul mais vibrante para maior visibilidade
     onSecondary = White,
     secondaryContainer = Color(0xFFD1E4FF),
     onSecondaryContainer = BlueMedium,
-    tertiary = TerracotaAccent,
-    onTertiary = White,
-    background = White,
-    onBackground = NeutralBlack,
+    
+    // Terciária mais contrastante
+    tertiary = HighVisibilityOrange, // Laranja de alta visibilidade
+    onTertiary = BlackText,
+    
+    // Cores de fundo e superfície com contraste otimizado
+    background = OffWhite, // Ligeiramente off-white para reduzir brilho em luz solar
+    onBackground = BlackText,
     surface = White,
-    onSurface = NeutralBlack,
+    onSurface = BlackText,
     surfaceVariant = NeutralLightGray,
-    onSurfaceVariant = NeutralGray,
+    onSurfaceVariant = NeutralBlack, // Texto escuro para melhor visibilidade
+    
+    // Cores de erro mais saturadas
     error = Error,
     onError = White
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = BluePrimary,
-    onPrimary = White,
+    // Modo escuro com melhor visibilidade para ambiente externo
+    primary = HighVisibilityYellow, // Amarelo de alta visibilidade
+    onPrimary = BlackText,
     primaryContainer = Color(0xFF0A3D59), // Versão mais escura do BluePrimary
     onPrimaryContainer = White,
-    secondary = BlueMedium,
+    
+    // Cores secundárias mais brilhantes
+    secondary = HighContrastBlue,
     onSecondary = White,
-    secondaryContainer = Color(0xFF002673), // Versão mais escura do BlueMedium
+    secondaryContainer = Color(0xFF003399), // Azul mais saturado
     onSecondaryContainer = White,
-    tertiary = TerracotaAccent,
-    onTertiary = NeutralBlack,
+    
+    // Terciária mais vibrante
+    tertiary = HighVisibilityOrange,
+    onTertiary = BlackText,
+    
+    // Fundo mais escuro com texto muito contrastante
     background = Color(0xFF121212),
-    onBackground = NeutralLightGray,
-    surface = Color(0xFF121212),
-    onSurface = NeutralLightGray,
-    surfaceVariant = NeutralGray,
-    onSurfaceVariant = NeutralLightGray,
-    error = Error,
+    onBackground = White,
+    surface = Color(0xFF1E1E1E), // Levemente mais claro que o fundo
+    onSurface = White, // Branco puro para máximo contraste
+    
+    // Variantes de superfície com alto contraste
+    surfaceVariant = Color(0xFF323232), // Cinza mais escuro
+    onSurfaceVariant = White, // Texto branco para máximo contraste
+    
+    // Cores de erro mais vibrantes
+    error = Color(0xFFFF5252), // Vermelho mais brilhante
     onError = White
 )
 

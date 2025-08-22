@@ -21,7 +21,7 @@ fun CardHeader(title: String) {
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(8.dp)
+            .padding(12.dp) // Aumentado de 8dp para 12dp para melhor toque
     ) {
         Text(
             text = title,
@@ -41,14 +41,14 @@ fun InfoCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp)) // Aumentado de 8dp para 12dp
             .background(MaterialTheme.colorScheme.surface)
     ) {
         CardHeader(title = title)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(16.dp) // Aumentado de 8dp para 16dp para melhor espaçamento
         ) {
             content()
         }

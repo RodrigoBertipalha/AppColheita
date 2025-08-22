@@ -20,12 +20,13 @@ fun LoadingIndicator(message: String = "Carregando...") {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator(
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 4.dp // Linha mais grossa para melhor visibilidade
         )
         if (message.isNotBlank()) {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium, // Aumentado para titleMedium
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -42,7 +43,7 @@ fun EmptyState(message: String) {
     ) {
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleMedium, // Maior e mais visível
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface
         )
