@@ -12,50 +12,60 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.colheitadecampo.ui.theme.BluePrimary
+import com.colheitadecampo.ui.theme.BlueMedium
+import com.colheitadecampo.ui.theme.TerracotaAccent
+import com.colheitadecampo.ui.theme.LimeAccent
+import com.colheitadecampo.ui.theme.NeutralBlack
+import com.colheitadecampo.ui.theme.NeutralGray
+import com.colheitadecampo.ui.theme.NeutralLightGray
+import com.colheitadecampo.ui.theme.Success
+import com.colheitadecampo.ui.theme.Error
+import com.colheitadecampo.ui.theme.White
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF4CAF50),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFB8F5B1),
-    onPrimaryContainer = Color(0xFF002200),
-    secondary = Color(0xFF2196F3),
-    onSecondary = Color(0xFFFFFFFF),
+    primary = BluePrimary,
+    onPrimary = White,
+    primaryContainer = Color(0xFFCFE3EF), // Versão clara do BluePrimary
+    onPrimaryContainer = BluePrimary,
+    secondary = BlueMedium,
+    onSecondary = White,
     secondaryContainer = Color(0xFFD1E4FF),
-    onSecondaryContainer = Color(0xFF001D36),
-    tertiary = Color(0xFFFF5722),
-    onTertiary = Color(0xFFFFFFFF),
-    background = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF1C1B1F),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF1C1B1F),
-    surfaceVariant = Color(0xFFE7E0EC),
-    onSurfaceVariant = Color(0xFF49454F),
-    error = Color(0xFFF44336),
-    onError = Color(0xFFFFFFFF)
+    onSecondaryContainer = BlueMedium,
+    tertiary = TerracotaAccent,
+    onTertiary = White,
+    background = White,
+    onBackground = NeutralBlack,
+    surface = White,
+    onSurface = NeutralBlack,
+    surfaceVariant = NeutralLightGray,
+    onSurfaceVariant = NeutralGray,
+    error = Error,
+    onError = White
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF81C784),
-    onPrimary = Color(0xFF003300),
-    primaryContainer = Color(0xFF004D1C),
-    onPrimaryContainer = Color(0xFFAEFFA5),
-    secondary = Color(0xFF64B5F6),
-    onSecondary = Color(0xFF003355),
-    secondaryContainer = Color(0xFF004A75),
-    onSecondaryContainer = Color(0xFFCFE5FF),
-    tertiary = Color(0xFFFF7043),
-    onTertiary = Color(0xFF3F0300),
-    background = Color(0xFF1A1C19),
-    onBackground = Color(0xFFE3E3DC),
-    surface = Color(0xFF1A1C19),
-    onSurface = Color(0xFFE3E3DC),
-    surfaceVariant = Color(0xFF414942),
-    onSurfaceVariant = Color(0xFFC1C9BF),
-    error = Color(0xFFEF5350),
-    onError = Color(0xFFFFFFFF)
+    primary = BluePrimary,
+    onPrimary = White,
+    primaryContainer = Color(0xFF0A3D59), // Versão mais escura do BluePrimary
+    onPrimaryContainer = White,
+    secondary = BlueMedium,
+    onSecondary = White,
+    secondaryContainer = Color(0xFF002673), // Versão mais escura do BlueMedium
+    onSecondaryContainer = White,
+    tertiary = TerracotaAccent,
+    onTertiary = NeutralBlack,
+    background = Color(0xFF121212),
+    onBackground = NeutralLightGray,
+    surface = Color(0xFF121212),
+    onSurface = NeutralLightGray,
+    surfaceVariant = NeutralGray,
+    onSurfaceVariant = NeutralLightGray,
+    error = Error,
+    onError = White
 )
 
 @Composable

@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#81C784</color>
-    <color name="on_primary">#003300</color>
-    <color name="primary_container">#004D1C</color>
-    <color name="on_primary_container">#AEFFA5</color>
-    <color name="secondary">#64B5F6</color>
-    <color name="on_secondary">#003355</color>
-    <color name="secondary_container">#004A75</color>
-    <color name="on_secondary_container">#CFE5FF</color>
-    <color name="tertiary">#FF7043</color>
-    <color name="on_tertiary">#3F0300</color>
-    <color name="background">#1A1C19</color>
-    <color name="on_background">#E3E3DC</color>
-    <color name="surface">#1A1C19</color>
-    <color name="on_surface">#E3E3DC</color>
-    <color name="surface_variant">#414942</color>
-    <color name="on_surface_variant">#C1C9BF</color>
-    <color name="error">#EF5350</color>
+    <!-- Cores principais da marca (modo noturno) -->
+    <color name="primary">#092A3B</color><!-- Pantone 540 C -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#0A3D59</color>
+    <color name="on_primary_container">#FFFFFF</color>
+    <color name="secondary">#003DA6</color><!-- Pantone 7691 C -->
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#002673</color>
+    <color name="on_secondary_container">#FFFFFF</color>
+    <color name="tertiary">#B67F5A</color><!-- Pantone 722 C -->
+    <color name="on_tertiary">#000000</color>
+    
+    <!-- Cores funcionais (modo noturno) -->
+    <color name="background">#121212</color>
+    <color name="on_background">#D0D0D0</color>
+    <color name="surface">#121212</color>
+    <color name="on_surface">#D0D0D0</color>
+    <color name="surface_variant">#898A8D</color><!-- Pantone Cool Gray 8 C -->
+    <color name="on_surface_variant">#D0D0D0</color><!-- Pantone 25% Black C -->
+    <color name="error">#F44336</color>
     <color name="on_error">#FFFFFF</color>
+    
+    <!-- Cores para status de colheita (modo noturno) -->
     <color name="harvested">#66BB6A</color>
     <color name="not_harvested">#EF5350</color>
+    
+    <!-- Cores complementares (modo noturno) -->
+    <color name="lime_accent">#B4BD00</color><!-- Pantone 390 C -->
 </resources>

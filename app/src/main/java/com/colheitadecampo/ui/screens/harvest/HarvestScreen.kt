@@ -80,6 +80,7 @@ import com.colheitadecampo.R
 import com.colheitadecampo.data.model.Plot
 import com.colheitadecampo.ui.components.AppScaffold
 import com.colheitadecampo.ui.components.LoadingIndicator
+import timber.log.Timber
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -111,9 +112,16 @@ fun HarvestScreen(
         }
     }
     
-    // Auto-focus on RECID input field
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+    // Auto-focus on RECID input field - com segurança adicional
+    LaunchedEffect(state.field) {
+        try {
+            // Atrasa um pouco para garantir que o componente esteja pronto
+            kotlinx.coroutines.delay(300)
+            focusRequester.requestFocus()
+        } catch (e: Exception) {
+            // Ignora erros de foco, não são críticos para a funcionalidade
+            Timber.e(e, "Erro ao solicitar foco")
+        }
     }
     
     Scaffold(

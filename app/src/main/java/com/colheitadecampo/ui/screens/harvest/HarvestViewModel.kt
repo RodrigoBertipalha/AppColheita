@@ -41,10 +41,24 @@ class HarvestViewModel @Inject constructor(
     private fun loadField() {
         viewModelScope.launch {
             try {
+                _state.update { it.copy(isLoading = true) }
+                
                 val field = fieldRepository.getFieldById(fieldId)
-                _state.update { it.copy(field = field) }
+                if (field != null) {
+                    _state.update { it.copy(field = field, isLoading = false) }
+                } else {
+                    _state.update { it.copy(
+                        isLoading = false, 
+                        errorMessage = "Campo não encontrado. ID: $fieldId"
+                    )}
+                    Timber.e("Campo não encontrado: fieldId=$fieldId")
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error loading field")
+                _state.update { it.copy(
+                    isLoading = false,
+                    errorMessage = "Erro ao carregar campo: ${e.localizedMessage ?: e.toString()}"
+                )}
             }
         }
     }
