@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -111,18 +113,21 @@ class HarvestViewModel @Inject constructor(
                 // Recupera o último plot colhido para mostrar na UI
                 val updatedLastColhidoPlot = plot ?: plotRepository.getPlotByRecid(currentState.recidInput)
                 
+                // Obtém os valores atualizados do banco de dados
+                val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
+                val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                
                 _state.update { 
                     it.copy(
                         recidInput = "",
                         isLoading = false,
+                        totalPlots = newTotalPlots,
+                        harvestedPlots = newHarvestedPlots,
+                        remainingPlots = newTotalPlots - newHarvestedPlots,
                         lastColhidoPlot = updatedLastColhidoPlot,
                         successMessage = "Plot ${currentState.recidInput} marcado como colhido!"
                     )
                 }
-                
-                // Força a atualização de contagens de colheita
-                plotRepository.getTotalPlotsCount(fieldId)
-                plotRepository.getHarvestedPlotsCount(fieldId)
                 
                 // Clear success message after 3 seconds
                 kotlinx.coroutines.delay(3000)
@@ -152,8 +157,15 @@ class HarvestViewModel @Inject constructor(
         // Load plots for this group
         viewModelScope.launch {
             try {
+                // Primeiro, limpe os plots do grupo anterior
+                _state.update { it.copy(groupPlots = emptyList()) }
+                
+                // Agora carregue os plots do grupo selecionado
                 plotRepository.getPlotsByGrupo(fieldId, grupoId).collect { plots ->
                     _state.update { it.copy(groupPlots = plots) }
+                    
+                    // Registre para debug
+                    Timber.d("Carregados ${plots.size} plots para o grupo $grupoId")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error loading group plots")
@@ -194,14 +206,23 @@ class HarvestViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
                 
+                // Marcar os plots selecionados como colhidos
                 marcarColhidoPorGrupoUseCase.marcarColhidoParaRecids(
                     recidList = selectedPlotIds.toList(),
                     colhido = true
                 )
                 
+                // Obter contadores atualizados após a operação
+                val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
+                val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                
+                // Atualizar o estado com os novos contadores
                 _state.update { 
                     it.copy(
                         isLoading = false,
+                        totalPlots = newTotalPlots,
+                        harvestedPlots = newHarvestedPlots,
+                        remainingPlots = newTotalPlots - newHarvestedPlots,
                         successMessageGrupo = "Plots do grupo $selectedGrupo marcados como colhidos!"
                     )
                 }
@@ -247,9 +268,16 @@ class HarvestViewModel @Inject constructor(
                     if (lastHarvestedPlot != null) {
                         plotRepository.updatePlot(lastHarvestedPlot.copy(colhido = false))
                         
+                        // Obter contadores atualizados após a operação
+                        val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
+                        val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                        
                         _state.update { 
                             it.copy(
                                 isLoading = false,
+                                totalPlots = newTotalPlots,
+                                harvestedPlots = newHarvestedPlots,
+                                remainingPlots = newTotalPlots - newHarvestedPlots,
                                 successMessage = "Colheita do plot ${lastHarvestedPlot.recid} desfeita!"
                             )
                         }
