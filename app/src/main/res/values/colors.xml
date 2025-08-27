@@ -25,6 +25,7 @@
     <!-- Cores para status de colheita -->
     <color name="harvested">#4CAF50</color>
     <color name="not_harvested">#F44336</color>
+    <color name="discarded">#2196F3</color>
     
     <!-- Cores complementares -->
     <color name="lime_accent">#B4BD00</color><!-- Pantone 390 C -->

@@ -25,6 +25,7 @@
     <!-- Cores para status de colheita (modo noturno) -->
     <color name="harvested">#66BB6A</color>
     <color name="not_harvested">#EF5350</color>
+    <color name="discarded">#42A5F5</color>
     
     <!-- Cores complementares (modo noturno) -->
     <color name="lime_accent">#B4BD00</color><!-- Pantone 390 C -->

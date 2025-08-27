@@ -120,13 +120,33 @@ fun DashboardScreen(
                     // Field Summary
                     InfoCard(title = state.field?.nomeCampo ?: "") {
                         Column(modifier = Modifier.fillMaxWidth()) {
+                            // Total de plots
                             Text(
                                 text = stringResource(R.string.total_plots, state.totalPlots),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            // Total elegíveis (total - descartados)
+                            val eligiblePlots = state.totalPlots - state.discardedPlots
+                            Text(
+                                text = "Plots elegíveis: $eligiblePlots",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            // Total descartados
+                            Text(
+                                text = "Plots descartados: ${state.discardedPlots}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = colorResource(id = R.color.discarded)
+                            )
+                            
                             Spacer(modifier = Modifier.height(8.dp))
                             
+                            // Percentual de colheita
                             Text(
                                 text = stringResource(R.string.harvested_percentage, state.percentageHarvested),
                                 style = MaterialTheme.typography.bodyLarge
@@ -134,6 +154,7 @@ fun DashboardScreen(
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             
+                            // Barra de progresso
                             LinearProgressIndicator(
                                 progress = state.percentageHarvested / 100f,
                                 modifier = Modifier.fillMaxWidth(),
@@ -160,15 +181,7 @@ fun DashboardScreen(
                         singleLine = true
                     )
                     
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Group Filters
-                    SectionTitle(title = stringResource(R.string.filter_by_group))
-                    GroupFilters(
-                        groups = state.availableGrupos,
-                        selectedGroup = selectedGrupoId,
-                        onSelectGroup = viewModel::selectGrupoId
-                    )
+                    // Removida a seção de filtro por grupo para simplificar a UI
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -187,10 +200,23 @@ fun DashboardScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Legend for plot colors
+                    SectionTitle(title = "Legenda")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        LegendItem(color = colorResource(id = R.color.harvested), text = "Colhido")
+                        LegendItem(color = colorResource(id = R.color.not_harvested), text = "Não Colhido")
+                        LegendItem(color = colorResource(id = R.color.discarded), text = "Descartado")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     // Plots List
                     SectionTitle(title = "Plots")
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (pagedPlots != null) {
@@ -279,11 +305,26 @@ fun GroupStatCard(groupStat: GroupStats) {
 }
 
 @Composable
+fun LegendItem(color: Color, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = text, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
 fun PlotItem(plot: Plot) {
-    val backgroundColor = if (plot.colhido) {
-        colorResource(id = R.color.harvested)
-    } else {
-        colorResource(id = R.color.not_harvested)
+    val backgroundColor = when {
+        plot.descartado -> colorResource(id = R.color.discarded)
+        plot.colhido -> colorResource(id = R.color.harvested)
+        else -> colorResource(id = R.color.not_harvested)
     }
 
     Card(
@@ -308,16 +349,39 @@ fun PlotItem(plot: Plot) {
             // Plot details - Layout melhorado conforme solicitado
             Column(modifier = Modifier.weight(1f)) {
                 // Plot em destaque
-                Text(
-                    text = "Plot: ${plot.plot}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Plot: ${plot.plot}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    // Adicionar um indicador visual se o plot for descartado
+                    if (plot.descartado) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "[DESCARTADO]",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorResource(id = R.color.discarded),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
                 // RECID logo abaixo
                 Text(
                     text = "RECID: ${plot.recid}",
                     style = MaterialTheme.typography.bodySmall
                 )
+                
+                // Mostrar a decisão se for diferente de "undecided"
+                if (plot.decision.isNotEmpty() && plot.decision != "undecided") {
+                    Text(
+                        text = "Decisão: ${plot.decision}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (plot.descartado) colorResource(id = R.color.discarded) else MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
             
             // Grupo e localização à direita

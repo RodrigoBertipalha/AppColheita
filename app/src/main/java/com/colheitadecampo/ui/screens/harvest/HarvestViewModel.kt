@@ -78,12 +78,17 @@ class HarvestViewModel @Inject constructor(
         plotRepository.getTotalPlotsCount(fieldId),
         plotRepository.getHarvestedPlotsCount(fieldId),
         plotRepository.getDistinctGrupos(fieldId),
+        plotRepository.getDiscardedPlotsCount(fieldId),
         _state
-    ) { totalPlots, harvestedPlots, grupos, state ->
+    ) { totalPlots, harvestedPlots, grupos, discardedPlots, state ->
+        // Calcula o total de plots elegíveis (excluindo descartados)
+        val eligiblePlots = totalPlots - discardedPlots
+        
         state.copy(
-            totalPlots = totalPlots,
+            totalPlots = eligiblePlots, // Apenas plots elegíveis
             harvestedPlots = harvestedPlots,
-            remainingPlots = totalPlots - harvestedPlots,
+            remainingPlots = eligiblePlots - harvestedPlots,
+            discardedPlots = discardedPlots, // Adiciona contagem de plots descartados
             availableGrupos = grupos,
             isLoading = false
         )
@@ -105,25 +110,59 @@ class HarvestViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
                 
-                val plot = marcarColhidoPorRecidUseCase.marcarColhido(
+                // Verificar se o plot existe e se está descartado
+                val plot = plotRepository.getPlotByRecid(currentState.recidInput)
+                
+                if (plot == null) {
+                    _state.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Plot não encontrado: ${currentState.recidInput}"
+                        )
+                    }
+                    return@launch
+                }
+                
+                // Se o plot estiver descartado, exibir mensagem de erro
+                if (plot.descartado) {
+                    _state.update { 
+                        it.copy(
+                            recidInput = "",
+                            isLoading = false,
+                            lastCheckedPlot = plot,
+                            errorMessage = "Plot ${currentState.recidInput} foi DESCARTADO e não pode ser colhido!"
+                        )
+                    }
+                    
+                    // Limpar mensagem de erro após 3 segundos
+                    kotlinx.coroutines.delay(3000)
+                    _state.update { it.copy(errorMessage = null) }
+                    return@launch
+                }
+                
+                // Se não estiver descartado, proceder com a colheita normal
+                val updatedPlot = marcarColhidoPorRecidUseCase.marcarColhido(
                     recid = currentState.recidInput,
                     colhido = true
                 )
                 
                 // Recupera o último plot colhido para mostrar na UI
-                val updatedLastColhidoPlot = plot ?: plotRepository.getPlotByRecid(currentState.recidInput)
+                val updatedLastColhidoPlot = updatedPlot ?: plot
                 
                 // Obtém os valores atualizados do banco de dados
                 val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
+                val newDiscardedPlots = plotRepository.getDiscardedPlotsCount(fieldId).first()
                 val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                val eligiblePlots = newTotalPlots - newDiscardedPlots
                 
                 _state.update { 
                     it.copy(
                         recidInput = "",
                         isLoading = false,
-                        totalPlots = newTotalPlots,
+                        totalPlots = eligiblePlots,
                         harvestedPlots = newHarvestedPlots,
-                        remainingPlots = newTotalPlots - newHarvestedPlots,
+                        remainingPlots = eligiblePlots - newHarvestedPlots,
+                        discardedPlots = newDiscardedPlots,
                         lastColhidoPlot = updatedLastColhidoPlot,
                         successMessage = "Plot ${currentState.recidInput} marcado como colhido!"
                     )
@@ -160,12 +199,12 @@ class HarvestViewModel @Inject constructor(
                 // Primeiro, limpe os plots do grupo anterior
                 _state.update { it.copy(groupPlots = emptyList()) }
                 
-                // Agora carregue os plots do grupo selecionado
-                plotRepository.getPlotsByGrupo(fieldId, grupoId).collect { plots ->
+                // Agora carregue os plots do grupo selecionado, excluindo os descartados
+                plotRepository.getNonDiscardedPlotsByGrupo(fieldId, grupoId).collect { plots ->
                     _state.update { it.copy(groupPlots = plots) }
                     
                     // Registre para debug
-                    Timber.d("Carregados ${plots.size} plots para o grupo $grupoId")
+                    Timber.d("Carregados ${plots.size} plots não descartados para o grupo $grupoId")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error loading group plots")
@@ -215,14 +254,17 @@ class HarvestViewModel @Inject constructor(
                 // Obter contadores atualizados após a operação
                 val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
                 val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                val newDiscardedPlots = plotRepository.getDiscardedPlotsCount(fieldId).first()
+                val eligiblePlots = newTotalPlots - newDiscardedPlots
                 
                 // Atualizar o estado com os novos contadores
                 _state.update { 
                     it.copy(
                         isLoading = false,
-                        totalPlots = newTotalPlots,
+                        totalPlots = eligiblePlots,
                         harvestedPlots = newHarvestedPlots,
-                        remainingPlots = newTotalPlots - newHarvestedPlots,
+                        remainingPlots = eligiblePlots - newHarvestedPlots,
+                        discardedPlots = newDiscardedPlots,
                         successMessageGrupo = "Plots do grupo $selectedGrupo marcados como colhidos!"
                     )
                 }
@@ -271,13 +313,16 @@ class HarvestViewModel @Inject constructor(
                         // Obter contadores atualizados após a operação
                         val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
                         val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
+                        val newDiscardedPlots = plotRepository.getDiscardedPlotsCount(fieldId).first()
+                        val eligiblePlots = newTotalPlots - newDiscardedPlots
                         
                         _state.update { 
                             it.copy(
                                 isLoading = false,
-                                totalPlots = newTotalPlots,
+                                totalPlots = eligiblePlots,
                                 harvestedPlots = newHarvestedPlots,
-                                remainingPlots = newTotalPlots - newHarvestedPlots,
+                                remainingPlots = eligiblePlots - newHarvestedPlots,
+                                discardedPlots = newDiscardedPlots,
                                 successMessage = "Colheita do plot ${lastHarvestedPlot.recid} desfeita!"
                             )
                         }
@@ -321,6 +366,7 @@ data class HarvestState(
     val totalPlots: Int = 0,
     val harvestedPlots: Int = 0,
     val remainingPlots: Int = 0,
+    val discardedPlots: Int = 0,
     val availableGrupos: List<String> = emptyList(),
     val groupPlots: List<Plot> = emptyList(),
     val selectedGrupoId: String? = null,
@@ -328,6 +374,7 @@ data class HarvestState(
     val showGroupDialog: Boolean = false,
     val isLoading: Boolean = false,
     val lastColhidoPlot: Plot? = null,
+    val lastCheckedPlot: Plot? = null,
     val successMessage: String? = null,
     val successMessageGrupo: String? = null,
     val errorMessage: String? = null

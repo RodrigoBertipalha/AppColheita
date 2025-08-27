@@ -66,15 +66,19 @@ class DashboardViewModel @Inject constructor(
         plotRepository.getHarvestedPlotsCount(fieldId),
         plotRepository.getGroupStats(fieldId),
         plotRepository.getDistinctGrupos(fieldId),
+        plotRepository.getDiscardedPlotsCount(fieldId),
         _state
-    ) { totalPlots, harvestedPlots, groupStats, grupos, state ->
-        val percentageHarvested = if (totalPlots > 0) {
-            harvestedPlots * 100f / totalPlots
+    ) { totalPlots, harvestedPlots, groupStats, grupos, discardedPlots, state ->
+        // Calcula o percentual baseado apenas em plots elegíveis (excluindo descartados)
+        val eligiblePlots = totalPlots - discardedPlots
+        val percentageHarvested = if (eligiblePlots > 0) {
+            harvestedPlots * 100f / eligiblePlots
         } else 0f
         
         state.copy(
             totalPlots = totalPlots,
             harvestedPlots = harvestedPlots,
+            discardedPlots = discardedPlots,
             percentageHarvested = percentageHarvested,
             groupStats = groupStats,
             availableGrupos = grupos,
@@ -121,6 +125,7 @@ data class DashboardState(
     val field: Field? = null,
     val totalPlots: Int = 0,
     val harvestedPlots: Int = 0,
+    val discardedPlots: Int = 0,
     val percentageHarvested: Float = 0f,
     val groupStats: List<GroupStats> = emptyList(),
     val availableGrupos: List<String> = emptyList(),
