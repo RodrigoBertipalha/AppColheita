@@ -31,5 +31,7 @@ data class Plot(
     val tier: String,
     val plot: String,
     val grupoId: String,
-    val colhido: Boolean = false
+    val colhido: Boolean = false,
+    val descartado: Boolean = false, // Nova propriedade para indicar plots descartados
+    val decision: String = "undecided" // Armazena o valor original da coluna decision
 )

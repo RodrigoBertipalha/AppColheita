@@ -39,14 +39,41 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
             return inputStream.use { stream ->
                 val workbook = WorkbookFactory.create(stream)
                 val sheet = workbook.getSheetAt(0)
-                val headerMap = getHeaderIndexMap(sheet)
+                var headerMap = getHeaderIndexMap(sheet)
                 
-                // Verify that the file contains all required columns
-                val requiredColumns = listOf("Loc Seq", "entry book name", "range", "row", "recid", "tier", "plot", "GrupoId")
-                val missingColumns = requiredColumns.filter { !headerMap.containsKey(it) }
+                // Verify that the file contains all required columns (case-insensitive search)
+                val requiredColumns = mapOf(
+                    "Loc Seq" to listOf("loc seq", "locseq", "loc_seq"),
+                    "entry book name" to listOf("entry book name", "entrybookname", "entry_book_name"),
+                    "range" to listOf("range"),
+                    "row" to listOf("row"),
+                    "recid" to listOf("recid", "rec_id", "rec id"),
+                    "tier" to listOf("tier"),
+                    "plot" to listOf("plot"),
+                    "GrupoId" to listOf("grupoid", "grupo_id", "grupo id", "group", "grupo")
+                )
+                
+                // Map to normalize header names
+                val normalizedHeaderMap = mutableMapOf<String, Int>()
+                for ((key, columnIndex) in headerMap) {
+                    val lowerKey = key.lowercase()
+                    for ((reqKey, alternates) in requiredColumns) {
+                        if (alternates.contains(lowerKey)) {
+                            normalizedHeaderMap[reqKey] = columnIndex
+                            break
+                        }
+                    }
+                    // Keep original key as well
+                    normalizedHeaderMap[key] = columnIndex
+                }
+                
+                val missingColumns = requiredColumns.keys.filter { !normalizedHeaderMap.containsKey(it) }
                 if (missingColumns.isNotEmpty()) {
                     throw IllegalArgumentException("Colunas obrigatórias ausentes: ${missingColumns.joinToString(", ")}")
                 }
+                
+                // Use the normalized header map for all further processing
+                headerMap = normalizedHeaderMap
 
                 // Extract field name from file name (without extension)
                 val fieldName = fileName.substringBeforeLast(".")
@@ -66,6 +93,18 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
                         val recid = getCellValue(row, headerMap["recid"] ?: continue)
                         if (recid.isBlank()) continue
 
+                        // Verificar a coluna decision para determinar se o plot deve ser descartado
+                        // Primeiro, procurar em várias possíveis colunas relacionadas a descarte
+                        val decisionIndex = headerMap["decision"] ?: headerMap["descartado"] ?: headerMap["discard"] ?: -1
+                        val decision = if (decisionIndex != -1) getCellValue(row, decisionIndex).lowercase().trim() else ""
+                        val isDiscarded = decision.contains("d") || 
+                            decision.contains("discard") || 
+                            decision.contains("descart") ||
+                            decision == "1" || 
+                            decision == "true" || 
+                            decision == "yes" || 
+                            decision == "sim"
+
                         plots.add(
                             Plot(
                                 recid = recid,
@@ -77,7 +116,9 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
                                 tier = getCellValue(row, headerMap["tier"] ?: continue),
                                 plot = getCellValue(row, headerMap["plot"] ?: continue),
                                 grupoId = getCellValue(row, headerMap["GrupoId"] ?: continue),
-                                colhido = false
+                                colhido = false,
+                                descartado = isDiscarded,
+                                decision = decision
                             )
                         )
                     } catch (e: Exception) {
@@ -126,10 +167,18 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
                     headerRow.createCell(colhidoIndex).setCellValue("colhido")
                 }
                 
+                // Add "descartado" column header if it doesn't exist
+                var descartadoIndex = headerMap["descartado"]
+                if (descartadoIndex == null) {
+                    val headerRow = sheet.getRow(0)
+                    descartadoIndex = headerRow.physicalNumberOfCells
+                    headerRow.createCell(descartadoIndex).setCellValue("descartado")
+                }
+                
                 // Create a map of recid to Plot for faster lookup
                 val plotsMap = plots.associateBy { it.recid }
                 
-                // Update or add harvest status
+                // Update or add harvest status and descartado status
                 for (i in 1 until sheet.physicalNumberOfRows) {
                     val row = sheet.getRow(i) ?: continue
                     try {
@@ -138,8 +187,13 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
                         
                         val plot = plotsMap[recid]
                         if (plot != null) {
+                            // Atualiza status de colheita
                             val colhidoCell = row.getCell(colhidoIndex) ?: row.createCell(colhidoIndex)
                             colhidoCell.setCellValue(if (plot.colhido) 1.0 else 0.0)
+                            
+                            // Atualiza status de descarte
+                            val descartadoCell = row.getCell(descartadoIndex) ?: row.createCell(descartadoIndex)
+                            descartadoCell.setCellValue(if (plot.descartado) 1.0 else 0.0)
                         }
                     } catch (e: Exception) {
                         Timber.e(e, "Error updating row $i")

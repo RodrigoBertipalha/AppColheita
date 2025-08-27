@@ -216,8 +216,10 @@ fun DashboardScreen(
                     // Plots List
                     SectionTitle(title = "Plots")
                     LazyColumn(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(2f),  // Aumentado o peso para dar mais espaço à lista
+                        verticalArrangement = Arrangement.spacedBy(4.dp) // Reduzido o espaçamento
                     ) {
                         if (pagedPlots != null) {
                             pagingItems(pagedPlots) { plot ->
@@ -266,8 +268,8 @@ fun GroupFilters(
 fun GroupStatCard(groupStat: GroupStats) {
     Card(
         modifier = Modifier
-            .width(120.dp)
-            .height(100.dp),
+            .width(90.dp)
+            .height(80.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -275,28 +277,28 @@ fun GroupStatCard(groupStat: GroupStats) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = groupStat.grupoId,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             
             Text(
                 text = "${groupStat.colhidos}/${groupStat.total}",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
             )
             
             LinearProgressIndicator(
                 progress = groupStat.percentageColhido / 100f,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = 4.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.background
             )
@@ -334,17 +336,17 @@ fun PlotItem(plot: Plot) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(6.dp),  // Reduzido o padding para caber mais plots
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Status indicator
             Box(
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(12.dp)  // Reduzido o tamanho do indicador
                     .background(backgroundColor, CircleShape)
             )
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))  // Reduzido o espaçamento
             
             // Plot details - Layout melhorado conforme solicitado
             Column(modifier = Modifier.weight(1f)) {

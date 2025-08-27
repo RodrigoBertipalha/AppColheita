@@ -37,8 +37,11 @@ interface PlotDao {
     @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND grupoId = :grupoId")
     fun getPagingSourceByGrupoId(fieldId: Long, grupoId: String): PagingSource<Int, Plot>
 
-    @Query("SELECT * FROM plots WHERE recid = :recid")
+    @Query("SELECT * FROM plots WHERE recid = :recid LIMIT 1")
     suspend fun getPlotByRecid(recid: String): Plot?
+    
+    @Query("SELECT * FROM plots WHERE recid LIKE :recid LIMIT 1")
+    suspend fun getPlotByPartialRecid(recid: String): Plot?
 
     @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId")
     fun getTotalPlotsCount(fieldId: Long): Flow<Int>
@@ -69,4 +72,20 @@ interface PlotDao {
     
     @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND colhido = 1 ORDER BY recid DESC LIMIT 1")
     suspend fun getLastHarvestedPlot(fieldId: Long): Plot?
+    
+    // Consultas relacionadas a plots descartados
+    @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId AND descartado = 1")
+    fun getDiscardedPlotsCount(fieldId: Long): Flow<Int>
+    
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND grupoId = :grupoId AND descartado = 0")
+    fun getNonDiscardedPlotsByGrupo(fieldId: Long, grupoId: String): Flow<List<Plot>>
+    
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND descartado = 0")
+    fun getNonDiscardedPlots(fieldId: Long): Flow<List<Plot>>
+    
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND descartado = 1")
+    fun getDiscardedPlots(fieldId: Long): Flow<List<Plot>>
+    
+    @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId AND colhido = 0 AND descartado = 0")
+    fun getEligibleRemainingPlotsCount(fieldId: Long): Flow<Int>
 }

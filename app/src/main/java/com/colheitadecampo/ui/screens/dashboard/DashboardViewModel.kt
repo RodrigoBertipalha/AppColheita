@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -38,10 +39,12 @@ class DashboardViewModel @Inject constructor(
 
     private val fieldId: Long = checkNotNull(savedStateHandle["fieldId"])
     
-    private val _state = MutableStateFlow(DashboardState())
+    private val _state = MutableStateFlow(DashboardState(isLoading = true))
+    val state = _state.asStateFlow()
     
     init {
         loadField()
+        observeDashboardData()
     }
     
     private fun loadField() {
@@ -55,40 +58,98 @@ class DashboardViewModel @Inject constructor(
         }
     }
     
+    private fun observeDashboardData() {
+        viewModelScope.launch {
+            // Observando cada fluxo separadamente
+            plotRepository.getTotalPlotsCount(fieldId).collect { totalPlots ->
+                updateStateWithTotalPlots(totalPlots)
+            }
+        }
+        
+        viewModelScope.launch {
+            plotRepository.getHarvestedPlotsCount(fieldId).collect { harvestedPlots ->
+                updateStateWithHarvestedPlots(harvestedPlots)
+            }
+        }
+        
+        viewModelScope.launch {
+            plotRepository.getGroupStats(fieldId).collect { groupStats ->
+                updateStateWithGroupStats(groupStats)
+            }
+        }
+        
+        viewModelScope.launch {
+            plotRepository.getDistinctGrupos(fieldId).collect { grupos ->
+                updateStateWithGrupos(grupos)
+            }
+        }
+        
+        viewModelScope.launch {
+            plotRepository.getDiscardedPlotsCount(fieldId).collect { discardedPlots ->
+                updateStateWithDiscardedPlots(discardedPlots)
+            }
+        }
+    }
+    
+    private fun updateStateWithTotalPlots(totalPlots: Int) {
+        _state.update { currentState ->
+            val eligiblePlots = totalPlots - currentState.discardedPlots
+            val percentageHarvested = if (eligiblePlots > 0) {
+                currentState.harvestedPlots * 100f / eligiblePlots
+            } else 0f
+            
+            currentState.copy(
+                totalPlots = totalPlots,
+                percentageHarvested = percentageHarvested,
+                isLoading = false
+            )
+        }
+    }
+    
+    private fun updateStateWithHarvestedPlots(harvestedPlots: Int) {
+        _state.update { currentState ->
+            val eligiblePlots = currentState.totalPlots - currentState.discardedPlots
+            val percentageHarvested = if (eligiblePlots > 0) {
+                harvestedPlots * 100f / eligiblePlots
+            } else 0f
+            
+            currentState.copy(
+                harvestedPlots = harvestedPlots,
+                percentageHarvested = percentageHarvested,
+                isLoading = false
+            )
+        }
+    }
+    
+    private fun updateStateWithGroupStats(groupStats: List<GroupStats>) {
+        _state.update { it.copy(groupStats = groupStats, isLoading = false) }
+    }
+    
+    private fun updateStateWithGrupos(grupos: List<String>) {
+        _state.update { it.copy(availableGrupos = grupos, isLoading = false) }
+    }
+    
+    private fun updateStateWithDiscardedPlots(discardedPlots: Int) {
+        _state.update { currentState ->
+            val eligiblePlots = currentState.totalPlots - discardedPlots
+            val percentageHarvested = if (eligiblePlots > 0) {
+                currentState.harvestedPlots * 100f / eligiblePlots
+            } else 0f
+            
+            currentState.copy(
+                discardedPlots = discardedPlots,
+                percentageHarvested = percentageHarvested,
+                isLoading = false
+            )
+        }
+    }
+    
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
     
     private val _selectedGrupoId = MutableStateFlow<String?>(null)
     val selectedGrupoId = _selectedGrupoId.asStateFlow()
-    
-    val state: StateFlow<DashboardState> = combine(
-        plotRepository.getTotalPlotsCount(fieldId),
-        plotRepository.getHarvestedPlotsCount(fieldId),
-        plotRepository.getGroupStats(fieldId),
-        plotRepository.getDistinctGrupos(fieldId),
-        plotRepository.getDiscardedPlotsCount(fieldId),
-        _state
-    ) { totalPlots, harvestedPlots, groupStats, grupos, discardedPlots, state ->
-        // Calcula o percentual baseado apenas em plots elegíveis (excluindo descartados)
-        val eligiblePlots = totalPlots - discardedPlots
-        val percentageHarvested = if (eligiblePlots > 0) {
-            harvestedPlots * 100f / eligiblePlots
-        } else 0f
-        
-        state.copy(
-            totalPlots = totalPlots,
-            harvestedPlots = harvestedPlots,
-            discardedPlots = discardedPlots,
-            percentageHarvested = percentageHarvested,
-            groupStats = groupStats,
-            availableGrupos = grupos,
-            isLoading = false
-        )
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        DashboardState(isLoading = true)
-    )
+
     
     @OptIn(ExperimentalCoroutinesApi::class)
     val pagedPlots: Flow<PagingData<Plot>> = combine(

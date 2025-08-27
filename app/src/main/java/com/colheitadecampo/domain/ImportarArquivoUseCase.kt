@@ -7,6 +7,7 @@ import com.colheitadecampo.data.model.Plot
 import com.colheitadecampo.data.repository.FieldRepository
 import com.colheitadecampo.data.repository.ImportSessionRepository
 import com.colheitadecampo.data.repository.PlotRepository
+import com.colheitadecampo.util.DatabaseBackupService
 import com.colheitadecampo.util.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -24,7 +25,8 @@ class ImportarArquivoUseCase @Inject constructor(
     private val excelService: ExcelService,
     private val fieldRepository: FieldRepository,
     private val plotRepository: PlotRepository,
-    private val importSessionRepository: ImportSessionRepository
+    private val importSessionRepository: ImportSessionRepository,
+    private val databaseBackupService: DatabaseBackupService
 ) {
     sealed class ImportStrategy {
         object Replace : ImportStrategy()
@@ -33,6 +35,9 @@ class ImportarArquivoUseCase @Inject constructor(
 
     suspend fun importFile(uri: Uri, strategy: ImportStrategy): Triple<Field, Int, Int> = withContext(Dispatchers.IO) {
         try {
+            // Criar backup do banco de dados antes da importação
+            databaseBackupService.backupDatabaseBeforeImport()
+            
             // Parse the file
             val (field, plots, fileName) = excelService.parseXlsx(uri)
             val fileSize = excelService.getFileSize(uri)
@@ -57,6 +62,10 @@ class ImportarArquivoUseCase @Inject constructor(
                         dataHora = LocalDateTime.now()
                     )
                     importSessionRepository.insertImportSession(importSession)
+                    
+                    // Verificar se os plots foram inseridos corretamente
+                    val insertedCount = plotRepository.getAllPlotsByFieldId(fieldId).first().size
+                    Timber.d("Plots inseridos: $insertedCount de ${plots.size}")
                     
                     Triple(field.copy(id = fieldId), plots.size, plots.size)
                 }

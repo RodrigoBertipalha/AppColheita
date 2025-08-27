@@ -288,11 +288,14 @@ fun HarvestScreen(
                         
                         Button(
                             onClick = { 
-                                if (state.availableGrupos.isNotEmpty() && state.recidInput.isNotBlank()) {
-                                    // Try to determine the group from the recid
-                                    val plot = state.groupPlots.find { it.recid == state.recidInput }
-                                    val grupo = plot?.grupoId ?: state.availableGrupos.first()
-                                    viewModel.showGroupHarvestDialog(grupo)
+                                if (state.availableGrupos.isNotEmpty()) {
+                                    // Se tiver RECID, tenta determinar o grupo a partir dele
+                                    if (state.recidInput.isNotBlank()) {
+                                        viewModel.determineGroupFromRecid(state.recidInput)
+                                    } else {
+                                        // Se não tiver RECID, mostra diálogo para escolher grupo
+                                        viewModel.prepareGroupSelection()
+                                    }
                                 }
                             },
                             modifier = Modifier
@@ -377,6 +380,15 @@ fun HarvestScreen(
                         }
                     }
                 }
+            }
+            
+            // Group Selector Dialog
+            if (state.showGroupSelector) {
+                GroupSelectorDialog(
+                    grupos = state.availableGruposForSelection,
+                    onGroupSelected = viewModel::selectGroupFromList,
+                    onDismiss = viewModel::hideGroupSelector
+                )
             }
             
             // Group Harvest Dialog

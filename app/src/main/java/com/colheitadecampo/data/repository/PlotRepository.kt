@@ -7,6 +7,7 @@ import com.colheitadecampo.data.local.PlotDao
 import com.colheitadecampo.data.model.GroupStats
 import com.colheitadecampo.data.model.Plot
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,7 +53,19 @@ class PlotRepository @Inject constructor(private val plotDao: PlotDao) {
         }.flow
     }
 
-    suspend fun getPlotByRecid(recid: String): Plot? = plotDao.getPlotByRecid(recid)
+    suspend fun getPlotByRecid(recid: String): Plot? {
+        var plot = plotDao.getPlotByRecid(recid)
+        
+        // Se não encontrou com correspondência exata, tenta com parcial
+        if (plot == null) {
+            plot = plotDao.getPlotByPartialRecid("%$recid%")
+            if (plot != null) {
+                Timber.d("Plot encontrado por correspondência parcial: ${plot.recid}")
+            }
+        }
+        
+        return plot
+    }
 
     fun getTotalPlotsCount(fieldId: Long): Flow<Int> = plotDao.getTotalPlotsCount(fieldId)
 
@@ -80,4 +93,19 @@ class PlotRepository @Inject constructor(private val plotDao: PlotDao) {
     suspend fun deletePlotsByFieldId(fieldId: Long) = plotDao.deletePlotsByFieldId(fieldId)
     
     suspend fun getLastHarvestedPlot(fieldId: Long): Plot? = plotDao.getLastHarvestedPlot(fieldId)
+    
+    // Métodos relacionados a plots descartados
+    fun getDiscardedPlotsCount(fieldId: Long): Flow<Int> = plotDao.getDiscardedPlotsCount(fieldId)
+    
+    fun getNonDiscardedPlotsByGrupo(fieldId: Long, grupoId: String): Flow<List<Plot>> =
+        plotDao.getNonDiscardedPlotsByGrupo(fieldId, grupoId)
+    
+    fun getNonDiscardedPlots(fieldId: Long): Flow<List<Plot>> = 
+        plotDao.getNonDiscardedPlots(fieldId)
+        
+    fun getDiscardedPlots(fieldId: Long): Flow<List<Plot>> = 
+        plotDao.getDiscardedPlots(fieldId)
+        
+    fun getEligibleRemainingPlotsCount(fieldId: Long): Flow<Int> =
+        plotDao.getEligibleRemainingPlotsCount(fieldId)
 }

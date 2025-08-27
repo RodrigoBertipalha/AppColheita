@@ -110,17 +110,47 @@ class HarvestViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
                 
-                // Verificar se o plot existe e se está descartado
-                val plot = plotRepository.getPlotByRecid(currentState.recidInput)
+                // Registrar em log o que está sendo buscado
+                Timber.d("Buscando plot com RECID: '${currentState.recidInput}'")
+                
+                // Primeiro tenta buscar o plot com RECID exato
+                val plots = plotRepository.getAllPlotsByFieldId(fieldId).first()
+                val exatoPorRecid = plots.find { it.recid == currentState.recidInput }
+                
+                // Tenta busca por aproximação se não encontrar exato
+                val plot = exatoPorRecid ?: plots.find { 
+                    it.recid.contains(currentState.recidInput) || 
+                    currentState.recidInput.contains(it.recid) 
+                }
                 
                 if (plot == null) {
+                    Timber.e("Plot não encontrado: '${currentState.recidInput}'")
+                    
+                    // Verifica se existem plots com recid similares para sugerir ao usuário
+                    val sugestoes = plots
+                        .filter { it.recid.lowercase().contains(currentState.recidInput.lowercase()) || 
+                                  currentState.recidInput.lowercase().contains(it.recid.lowercase()) }
+                        .take(3)
+                        .map { it.recid }
+                    
+                    val mensagemErro = if (sugestoes.isNotEmpty()) {
+                        "Plot não encontrado: ${currentState.recidInput}. Sugestões: ${sugestoes.joinToString(", ")}"
+                    } else {
+                        "Plot não encontrado: ${currentState.recidInput}"
+                    }
+                    
                     _state.update { 
                         it.copy(
                             isLoading = false,
-                            errorMessage = "Plot não encontrado: ${currentState.recidInput}"
+                            errorMessage = mensagemErro
                         )
                     }
                     return@launch
+                }
+                
+                // Se encontrou por aproximação, mostra qual foi encontrado
+                if (plot.recid != currentState.recidInput) {
+                    Timber.d("Plot encontrado por aproximação: ${plot.recid}")
                 }
                 
                 // Se o plot estiver descartado, exibir mensagem de erro
@@ -130,7 +160,7 @@ class HarvestViewModel @Inject constructor(
                             recidInput = "",
                             isLoading = false,
                             lastCheckedPlot = plot,
-                            errorMessage = "Plot ${currentState.recidInput} foi DESCARTADO e não pode ser colhido!"
+                            errorMessage = "Plot ${plot.recid} foi DESCARTADO e não pode ser colhido!"
                         )
                     }
                     
@@ -142,7 +172,7 @@ class HarvestViewModel @Inject constructor(
                 
                 // Se não estiver descartado, proceder com a colheita normal
                 val updatedPlot = marcarColhidoPorRecidUseCase.marcarColhido(
-                    recid = currentState.recidInput,
+                    recid = plot.recid, // Usar o RECID encontrado (pode ser diferente do input)
                     colhido = true
                 )
                 
@@ -155,6 +185,13 @@ class HarvestViewModel @Inject constructor(
                 val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
                 val eligiblePlots = newTotalPlots - newDiscardedPlots
                 
+                // Se foi encontrado por aproximação, mostrar mensagem diferente
+                val successMsg = if (plot.recid != currentState.recidInput) {
+                    "Plot ${plot.recid} marcado como colhido! (encontrado a partir de ${currentState.recidInput})"
+                } else {
+                    "Plot ${plot.recid} marcado como colhido!"
+                }
+                
                 _state.update { 
                     it.copy(
                         recidInput = "",
@@ -164,7 +201,7 @@ class HarvestViewModel @Inject constructor(
                         remainingPlots = eligiblePlots - newHarvestedPlots,
                         discardedPlots = newDiscardedPlots,
                         lastColhidoPlot = updatedLastColhidoPlot,
-                        successMessage = "Plot ${currentState.recidInput} marcado como colhido!"
+                        successMessage = successMsg
                     )
                 }
                 
@@ -199,15 +236,38 @@ class HarvestViewModel @Inject constructor(
                 // Primeiro, limpe os plots do grupo anterior
                 _state.update { it.copy(groupPlots = emptyList()) }
                 
+                // Verificando se existem plots para este grupo
+                val todosGrupos = plotRepository.getDistinctGrupos(fieldId).first()
+                if (!todosGrupos.contains(grupoId)) {
+                    Timber.w("Grupo $grupoId não encontrado na lista de grupos: $todosGrupos")
+                    _state.update { it.copy(
+                        errorMessage = "Grupo $grupoId não encontrado no campo"
+                    )}
+                    return@launch
+                }
+                
                 // Agora carregue os plots do grupo selecionado, excluindo os descartados
                 plotRepository.getNonDiscardedPlotsByGrupo(fieldId, grupoId).collect { plots ->
-                    _state.update { it.copy(groupPlots = plots) }
-                    
-                    // Registre para debug
-                    Timber.d("Carregados ${plots.size} plots não descartados para o grupo $grupoId")
+                    if (plots.isEmpty()) {
+                        Timber.w("Nenhum plot encontrado para o grupo $grupoId")
+                        _state.update { it.copy(
+                            errorMessage = "Nenhum plot disponível para colheita no grupo $grupoId",
+                            groupPlots = emptyList()
+                        )}
+                    } else {
+                        _state.update { it.copy(groupPlots = plots) }
+                        // Registre para debug
+                        Timber.d("Carregados ${plots.size} plots não descartados para o grupo $grupoId")
+                        plots.forEach { plot ->
+                            Timber.d("Plot [Grupo: $grupoId] - RECID: ${plot.recid}, Colhido: ${plot.colhido}")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error loading group plots")
+                _state.update { it.copy(
+                    errorMessage = "Erro ao carregar plots do grupo: ${e.localizedMessage}"
+                )}
             }
         }
     }
@@ -245,17 +305,41 @@ class HarvestViewModel @Inject constructor(
             try {
                 _state.update { it.copy(isLoading = true) }
                 
-                // Marcar os plots selecionados como colhidos
-                marcarColhidoPorGrupoUseCase.marcarColhidoParaRecids(
-                    recidList = selectedPlotIds.toList(),
-                    colhido = true
-                )
+                Timber.d("Iniciando colheita por grupo para ${selectedPlotIds.size} plots do grupo $selectedGrupo")
+                
+                if (selectedPlotIds.isEmpty()) {
+                    // Se nenhum plot foi selecionado individualmente, marcar todos os plots do grupo
+                    Timber.d("Nenhum plot selecionado individualmente, marcando todo o grupo $selectedGrupo")
+                    val affectedCount = marcarColhidoPorGrupoUseCase.marcarColhidoPorGrupo(
+                        fieldId = fieldId,
+                        grupoId = selectedGrupo,
+                        colhido = true
+                    )
+                    Timber.d("$affectedCount plots marcados como colhidos no grupo $selectedGrupo")
+                } else {
+                    // Marcar apenas os plots selecionados
+                    Timber.d("Marcando ${selectedPlotIds.size} plots selecionados como colhidos")
+                    marcarColhidoPorGrupoUseCase.marcarColhidoParaRecids(
+                        recidList = selectedPlotIds.toList(),
+                        colhido = true
+                    )
+                }
                 
                 // Obter contadores atualizados após a operação
                 val newTotalPlots = plotRepository.getTotalPlotsCount(fieldId).first()
                 val newHarvestedPlots = plotRepository.getHarvestedPlotsCount(fieldId).first()
                 val newDiscardedPlots = plotRepository.getDiscardedPlotsCount(fieldId).first()
                 val eligiblePlots = newTotalPlots - newDiscardedPlots
+                
+                // Verificar quantos plots foram colhidos
+                val colhidosCount = if (selectedPlotIds.isEmpty()) {
+                    // Se todos os plots do grupo foram colhidos, contar a quantidade
+                    val grupoPlots = plotRepository.getPlotsByGrupo(fieldId, selectedGrupo).first()
+                    grupoPlots.count { it.colhido }
+                } else {
+                    // Se foram plots específicos, contar os selecionados
+                    selectedPlotIds.size
+                }
                 
                 // Atualizar o estado com os novos contadores
                 _state.update { 
@@ -265,11 +349,24 @@ class HarvestViewModel @Inject constructor(
                         harvestedPlots = newHarvestedPlots,
                         remainingPlots = eligiblePlots - newHarvestedPlots,
                         discardedPlots = newDiscardedPlots,
-                        successMessageGrupo = "Plots do grupo $selectedGrupo marcados como colhidos!"
+                        successMessageGrupo = "$colhidosCount plots do grupo $selectedGrupo marcados como colhidos!"
                     )
                 }
                 
-                hideGroupDialog()
+                // Antes de fechar o diálogo, verifica se ainda existem plots não colhidos
+                val grupoNaoColhidos = plotRepository.getPlotsByGrupo(fieldId, selectedGrupo)
+                    .first()
+                    .filter { !it.colhido && !it.descartado }
+                
+                // Se ainda existem plots não colhidos no grupo, mantenha o diálogo aberto com os plots atualizados
+                if (grupoNaoColhidos.isNotEmpty()) {
+                    _state.update {
+                        it.copy(groupPlots = grupoNaoColhidos)
+                    }
+                } else {
+                    // Se não há mais plots para colher, feche o diálogo
+                    hideGroupDialog()
+                }
                 
                 // Clear success message after 3 seconds
                 kotlinx.coroutines.delay(3000)
@@ -297,6 +394,102 @@ class HarvestViewModel @Inject constructor(
 
     fun resetErrorMessage() {
         _state.update { it.copy(errorMessage = null) }
+    }
+    
+    // Métodos novos para melhorar a seleção de grupo
+    fun determineGroupFromRecid(recid: String) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(isLoading = true) }
+                
+                // Busca plot pelo RECID informado
+                val plot = plotRepository.getPlotByRecid(recid)
+                
+                if (plot == null) {
+                    // Se não encontrar o plot, mostra mensagem de erro
+                    _state.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Plot com RECID $recid não encontrado"
+                        )
+                    }
+                    return@launch
+                }
+                
+                // Verifica se o plot está descartado
+                if (plot.descartado) {
+                    _state.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Plot $recid está descartado e não pode ser colhido"
+                        )
+                    }
+                    return@launch
+                }
+                
+                // Se encontrar, abre o diálogo com o grupo do plot selecionado
+                Timber.d("Plot encontrado para RECID $recid: grupo ${plot.grupoId}")
+                showGroupHarvestDialog(plot.grupoId)
+                
+            } catch (e: Exception) {
+                Timber.e(e, "Erro ao determinar grupo a partir do RECID")
+                _state.update { 
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Erro ao buscar grupo: ${e.localizedMessage}"
+                    )
+                }
+            }
+        }
+    }
+    
+    fun prepareGroupSelection() {
+        viewModelScope.launch {
+            try {
+                val grupos = plotRepository.getDistinctGrupos(fieldId).first()
+                
+                if (grupos.isEmpty()) {
+                    _state.update {
+                        it.copy(
+                            errorMessage = "Nenhum grupo disponível neste campo"
+                        )
+                    }
+                    return@launch
+                }
+                
+                // Mostra diálogo para escolher grupo
+                _state.update {
+                    it.copy(
+                        showGroupSelector = true,
+                        availableGruposForSelection = grupos
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Erro ao preparar seleção de grupo")
+                _state.update {
+                    it.copy(
+                        errorMessage = "Erro ao carregar grupos: ${e.localizedMessage}"
+                    )
+                }
+            }
+        }
+    }
+    
+    fun selectGroupFromList(grupoId: String) {
+        _state.update {
+            it.copy(
+                showGroupSelector = false
+            )
+        }
+        showGroupHarvestDialog(grupoId)
+    }
+    
+    fun hideGroupSelector() {
+        _state.update {
+            it.copy(
+                showGroupSelector = false
+            )
+        }
     }
 
     fun desfazerColheita() {
@@ -377,5 +570,8 @@ data class HarvestState(
     val lastCheckedPlot: Plot? = null,
     val successMessage: String? = null,
     val successMessageGrupo: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    // Novos campos
+    val showGroupSelector: Boolean = false,
+    val availableGruposForSelection: List<String> = emptyList()
 )
