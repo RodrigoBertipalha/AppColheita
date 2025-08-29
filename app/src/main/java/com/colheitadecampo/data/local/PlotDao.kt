@@ -74,16 +74,16 @@ interface PlotDao {
     suspend fun getLastHarvestedPlot(fieldId: Long): Plot?
     
     // Consultas relacionadas a plots descartados
-    @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId AND descartado = 1")
+    @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId AND (descartado = 1 OR grupoId = '')")
     fun getDiscardedPlotsCount(fieldId: Long): Flow<Int>
     
-    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND grupoId = :grupoId AND descartado = 0")
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND grupoId = :grupoId AND descartado = 0 AND grupoId != ''")
     fun getNonDiscardedPlotsByGrupo(fieldId: Long, grupoId: String): Flow<List<Plot>>
     
-    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND descartado = 0")
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND descartado = 0 AND grupoId != ''")
     fun getNonDiscardedPlots(fieldId: Long): Flow<List<Plot>>
     
-    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND descartado = 1")
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND (descartado = 1 OR grupoId = '')")
     fun getDiscardedPlots(fieldId: Long): Flow<List<Plot>>
     
     @Query("SELECT COUNT(*) FROM plots WHERE fieldId = :fieldId AND colhido = 0 AND descartado = 0")

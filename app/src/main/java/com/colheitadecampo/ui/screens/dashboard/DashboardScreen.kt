@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -187,10 +188,14 @@ fun DashboardScreen(
                     
                     // Group Distribution
                     if (state.groupStats.isNotEmpty()) {
-                        SectionTitle(title = stringResource(R.string.group_distribution))
+                        SectionTitle(
+                            title = stringResource(R.string.group_distribution),
+                            color = Color(0xFFFFEB3B) // Amarelo como na imagem
+                        )
                         LazyRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                         ) {
                             items(state.groupStats) { groupStat ->
                                 GroupStatCard(groupStat = groupStat)
@@ -201,9 +206,11 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     // Legend for plot colors
-                    SectionTitle(title = "Legenda")
+                    SectionTitle(title = "Legenda", color = Color(0xFFFFEB3B)) // Amarelo como na imagem
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         LegendItem(color = colorResource(id = R.color.harvested), text = "Colhido")
@@ -214,11 +221,12 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     // Plots List
-                    SectionTitle(title = "Plots")
+                    SectionTitle(title = "Plots", color = Color(0xFFFFEB3B)) // Amarelo como na imagem
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(2f),  // Aumentado o peso para dar mais espaço à lista
+                        contentPadding = PaddingValues(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp) // Reduzido o espaçamento
                     ) {
                         if (pagedPlots != null) {
@@ -266,12 +274,14 @@ fun GroupFilters(
 
 @Composable
 fun GroupStatCard(groupStat: GroupStats) {
+    // Define um background mais escuro para o card, conforme mostrado no screenshot
     Card(
         modifier = Modifier
             .width(90.dp)
             .height(80.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            // Usa um fundo mais escuro como na imagem
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
         )
     ) {
         Column(
@@ -284,14 +294,18 @@ fun GroupStatCard(groupStat: GroupStats) {
             Text(
                 text = groupStat.grupoId,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
             )
             
             Spacer(modifier = Modifier.height(4.dp))
             
+            // Destacar números com fonte maior quando há plots colhidos
             Text(
                 text = "${groupStat.colhidos}/${groupStat.total}",
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (groupStat.colhidos > 0) FontWeight.Bold else FontWeight.Normal,
+                color = if (groupStat.colhidos > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             LinearProgressIndicator(
@@ -300,7 +314,7 @@ fun GroupStatCard(groupStat: GroupStats) {
                     .fillMaxWidth()
                     .padding(top = 4.dp),
                 color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.background
+                trackColor = MaterialTheme.colorScheme.background.copy(alpha = 0.5f)
             )
         }
     }
@@ -339,11 +353,12 @@ fun PlotItem(plot: Plot) {
                 .padding(6.dp),  // Reduzido o padding para caber mais plots
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Status indicator
+            // Status indicator - Destacado como na imagem
             Box(
                 modifier = Modifier
-                    .size(12.dp)  // Reduzido o tamanho do indicador
+                    .size(16.dp)  // Aumentado um pouco o tamanho para melhor visibilidade
                     .background(backgroundColor, CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, CircleShape)
             )
             
             Spacer(modifier = Modifier.width(8.dp))  // Reduzido o espaçamento
