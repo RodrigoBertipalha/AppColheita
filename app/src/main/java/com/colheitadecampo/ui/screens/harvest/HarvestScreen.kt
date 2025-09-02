@@ -126,7 +126,7 @@ fun HarvestScreen(
     
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    ) { outerPadding ->
         AppScaffold(
             title = stringResource(R.string.harvest_title),
             navigationIcon = {
@@ -142,8 +142,9 @@ fun HarvestScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp, bottom = 64.dp) // Aumentamos significativamente o padding inferior
+                    .verticalScroll(rememberScrollState()) // Adiciona scroll vertical
             ) {
                 when {
                     state.isLoading -> LoadingIndicator()
@@ -161,6 +162,39 @@ fun HarvestScreen(
                         }
                     }
                     else -> {
+                        // Nome do campo e data
+                        state.field?.let { field ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    contentColor = MaterialTheme.colorScheme.onSecondary
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = field.nomeCampo,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    
+                                    Text(
+                                        text = "Importado: ${field.dataArquivo.toLocalDate()}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                        
                         // Harvest Progress
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -175,17 +209,31 @@ fun HarvestScreen(
                                     .padding(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
+                                // Calcular porcentagem de colheita
+                                val porcentagemColheita = if (state.totalPlots > 0) {
+                                    (state.harvestedPlots.toFloat() / state.totalPlots.toFloat() * 100).toInt()
+                                } else {
+                                    0
+                                }
+                                
+                                Text(
+                                    text = "$porcentagemColheita% Colhido",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
                                 Text(
                                     text = stringResource(
                                         R.string.harvested_count,
                                         state.harvestedPlots,
                                         state.totalPlots
                                     ),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                                 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 
                                 Text(
                                     text = stringResource(R.string.remaining, state.remainingPlots),
@@ -332,7 +380,9 @@ fun HarvestScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             
                             Card(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 32.dp), // Adiciona padding inferior para evitar corte
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -380,6 +430,8 @@ fun HarvestScreen(
                         }
                     }
                 }
+                // Spacer adicional no final da coluna para garantir que tudo fique visível
+                Spacer(modifier = Modifier.height(40.dp))
             }
             
             // Group Selector Dialog

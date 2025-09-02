@@ -113,25 +113,21 @@ class HarvestViewModel @Inject constructor(
                 // Registrar em log o que está sendo buscado
                 Timber.d("Buscando plot com RECID: '${currentState.recidInput}'")
                 
-                // Primeiro tenta buscar o plot com RECID exato
-                val plots = plotRepository.getAllPlotsByFieldId(fieldId).first()
-                val exatoPorRecid = plots.find { it.recid == currentState.recidInput }
-                
-                // Tenta busca por aproximação se não encontrar exato
-                val plot = exatoPorRecid ?: plots.find { 
-                    it.recid.contains(currentState.recidInput) || 
-                    currentState.recidInput.contains(it.recid) 
-                }
+                // Usamos a busca otimizada que primeiro tenta pelo ID do campo e RECID exato
+                val plot = plotRepository.findPlotInFieldByRecid(fieldId, currentState.recidInput)
                 
                 if (plot == null) {
                     Timber.e("Plot não encontrado: '${currentState.recidInput}'")
                     
                     // Verifica se existem plots com recid similares para sugerir ao usuário
-                    val sugestoes = plots
-                        .filter { it.recid.lowercase().contains(currentState.recidInput.lowercase()) || 
-                                  currentState.recidInput.lowercase().contains(it.recid.lowercase()) }
+                    val allPlots = plotRepository.getAllPlotsByFieldId(fieldId).first()
+                    val sugestoes = allPlots
+                        .filter { plotItem -> 
+                            plotItem.recid.lowercase().contains(currentState.recidInput.lowercase()) || 
+                            currentState.recidInput.lowercase().contains(plotItem.recid.lowercase())
+                        }
                         .take(3)
-                        .map { it.recid }
+                        .map { plotItem -> plotItem.recid }
                     
                     val mensagemErro = if (sugestoes.isNotEmpty()) {
                         "Plot não encontrado: ${currentState.recidInput}. Sugestões: ${sugestoes.joinToString(", ")}"

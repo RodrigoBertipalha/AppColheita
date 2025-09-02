@@ -281,14 +281,27 @@ class ExcelService @Inject constructor(@dagger.hilt.android.qualifiers.Applicati
         val cell = row.getCell(columnIndex) ?: return ""
         return when (cell.cellType) {
             CellType.STRING -> cell.stringCellValue
-            CellType.NUMERIC -> cell.numericCellValue.toString()
+            CellType.NUMERIC -> {
+                // Remove decimal point for whole numbers to evitar o ".0" no final
+                val numValue = cell.numericCellValue
+                if (numValue == numValue.toLong().toDouble()) {
+                    numValue.toLong().toString()
+                } else {
+                    numValue.toString()
+                }
+            }
             CellType.BOOLEAN -> cell.booleanCellValue.toString()
             CellType.FORMULA -> {
                 try {
                     cell.stringCellValue
                 } catch (e: Exception) {
                     try {
-                        cell.numericCellValue.toString()
+                        val numValue = cell.numericCellValue
+                        if (numValue == numValue.toLong().toDouble()) {
+                            numValue.toLong().toString()
+                        } else {
+                            numValue.toString()
+                        }
                     } catch (e: Exception) {
                         ""
                     }

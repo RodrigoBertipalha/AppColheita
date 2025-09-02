@@ -1,10 +1,12 @@
 package com.colheitadecampo.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -32,7 +34,8 @@ fun AppScaffold(
                         text = title,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
-                        )
+                        ),
+                        maxLines = 1
                     )
                 },
                 navigationIcon = {
@@ -58,15 +61,28 @@ fun AppScaffold(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
+                // Aplicar padding para evitar sobreposição com a status bar
                 modifier = Modifier.statusBarsPadding()
             )
         },
         floatingActionButton = floatingActionButton,
+        // Aplicamos padding para a navigation bar e garantimos o preenchimento completo da tela
+        // Usamos contentWindowInsets para evitar problemas com a barra de status e navegação
+        contentWindowInsets = WindowInsets(0),
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding()
     ) { paddingValues ->
-        content(paddingValues)
+        // Aplicamos padding da Scaffold para o conteúdo, garantindo espaçamento adequado
+        content(
+            // Usamos valores de padding adequados para garantir visibilidade de todo conteúdo
+            PaddingValues(
+                top = paddingValues.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding() + 24.dp, // Aumentamos o padding inferior para evitar cortes
+                start = 16.dp,
+                end = 16.dp
+            )
+        )
     }
 }
 

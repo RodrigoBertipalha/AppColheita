@@ -7,6 +7,8 @@ import com.colheitadecampo.data.local.PlotDao
 import com.colheitadecampo.data.model.GroupStats
 import com.colheitadecampo.data.model.Plot
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,6 +56,7 @@ class PlotRepository @Inject constructor(private val plotDao: PlotDao) {
     }
 
     suspend fun getPlotByRecid(recid: String): Plot? {
+        // Primeiro, tenta buscar por RECID exato (mais rápido)
         var plot = plotDao.getPlotByRecid(recid)
         
         // Se não encontrou com correspondência exata, tenta com parcial
@@ -93,6 +96,26 @@ class PlotRepository @Inject constructor(private val plotDao: PlotDao) {
     suspend fun deletePlotsByFieldId(fieldId: Long) = plotDao.deletePlotsByFieldId(fieldId)
     
     suspend fun getLastHarvestedPlot(fieldId: Long): Plot? = plotDao.getLastHarvestedPlot(fieldId)
+    
+    /**
+     * Busca otimizada por um plot usando fieldId e RECID
+     * Primeiro tenta busca exata, depois busca aproximada
+     */
+    suspend fun findPlotInFieldByRecid(fieldId: Long, recid: String): Plot? {
+        // Primeiro tenta busca exata pelo RECID
+        val exactPlot = plotDao.findPlotByExactRecid(fieldId, recid)
+        if (exactPlot != null) {
+            return exactPlot
+        }
+        
+        // Se não encontrou com busca exata, tenta com todas as parcelas do campo
+        val allPlots = plotDao.getAllPlotsByFieldId(fieldId).first()
+        
+        // Tenta busca aproximada
+        return allPlots.find { plotItem ->
+            plotItem.recid.contains(recid) || recid.contains(plotItem.recid)
+        }
+    }
     
     // Métodos relacionados a plots descartados
     fun getDiscardedPlotsCount(fieldId: Long): Flow<Int> = plotDao.getDiscardedPlotsCount(fieldId)

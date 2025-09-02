@@ -30,6 +30,12 @@ interface PlotDao {
 
     @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND recid LIKE '%' || :searchQuery || '%'")
     fun searchPlotsByRecid(fieldId: Long, searchQuery: String): PagingSource<Int, Plot>
+    
+    /**
+     * Busca otimizada por RECID exato (equivalente ao where recid = :recid)
+     */
+    @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND recid = :recid LIMIT 1")
+    suspend fun findPlotByExactRecid(fieldId: Long, recid: String): Plot?
 
     @Query("SELECT * FROM plots WHERE fieldId = :fieldId AND grupoId = :grupoId")
     fun getPlotsByGrupo(fieldId: Long, grupoId: String): Flow<List<Plot>>
